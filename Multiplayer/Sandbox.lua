@@ -59,11 +59,6 @@ function direction(x,y,nr)
 	return nx, ny
 end
 
-----random "real" number. I do not trust this to not desync
---function randomReal()
---	return GetRandom(5001)/5000
---end
-
 local selidx = 1
 function chSelector(dir)
 	selidx = 1 + (selidx + dir - 1) % #items
@@ -81,7 +76,7 @@ function upQuadVector(ampl)
 	local x,y
 	--pi/2 == 15708 / 10 000
 	--pi/4 ==  7854 / 10 000
-	--in terms of real numbers: t = (randomReal() * pi/2) - pi/4
+	--in terms of real numbers: t = (math.random() * pi/2) - pi/4
 	--here t is 10000 times too large and t*t 100000000 too large
 	local t = GetRandom(15709) - 7854
 	x = quotient(ampl * t, 10000)
@@ -103,17 +98,6 @@ function mineFountainThink()
 	local tx,ty = unpack(mineFountainPos)
 	local vx,vy
 	if mineFountainMaxV > 0 then
-		-- the following does not work due to floating point arithmetic being
-		-- architecture-dependant and thus causing desync:
-		--local v = mineFountainMaxV -- * randomReal()
-		----upwards only
-		----first order taylor expansion around pi/2: angle = pi/2 - t, t in [-pi/4,pi/4]
-		--local t = 3.1416 * (randomReal() * 2 - 1) / 4
-		----cos
-		--vx = v * t
-		----sin * (-1)
-		--vy = -v * (1 - t*t / 2)
-
 		vx,vy = upQuadVector(mineFountainMaxV)
 	else
 		vx = 0
