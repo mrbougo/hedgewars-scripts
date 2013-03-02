@@ -188,11 +188,11 @@ ItemSelector = class(ItemSetting,
 		o:updateValue()
 	end)
 function ItemSelector:left()   --see Menu:down/up
-	self.pos = 1+self.pos%#self.values
+	self.pos = 1+(self.pos-2)%#self.values
 	self:updateValue()
 end
 function ItemSelector:right()  --see Menu:down/up
-	self.pos = 1+(self.pos-2)%#self.values
+	self.pos = 1+self.pos%#self.values
 	self:updateValue()
 end
 function ItemSelector:updateValue()
