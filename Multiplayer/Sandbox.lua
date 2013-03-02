@@ -209,6 +209,15 @@ for i=1, #items do
 	table.insert(itemValues, {itemnames[i],items[i]})
 end
 
+function mRefresh()
+	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
+end
+
+function mHide()
+	inMenu = false
+	HideMission()
+end
+
 local inMenu = false
 local menu = Menu:new("Main menu", {
 	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
@@ -244,13 +253,4 @@ function onRight()
 		menuRight()
 		mRefresh()
 	end
-end
-
-function mRefresh()
-	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
-end
-
-function mHide()
-	inMenu = false
-	HideMission()
 end
