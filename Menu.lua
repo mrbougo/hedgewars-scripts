@@ -239,8 +239,8 @@ end
 ItemCB = class(Item,
 	function(o, text, cb, data)
 		Item.init(o, text);
-		Item.cb = cb;
-		Item.data = data;
+		o.cb = cb;
+		o.data = data;
 	end);
 function ItemCB:right()
 	self.cb(self.data);
