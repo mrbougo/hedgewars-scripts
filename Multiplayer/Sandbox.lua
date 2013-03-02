@@ -255,3 +255,10 @@ function onRight()
 		mRefresh()
 	end
 end
+
+function onSetWeapon()
+	if GetCurAmmoType() ~= amTeleport and inmenu then mHide() end
+end
+function onNewTurn()
+	mHide()
+end
