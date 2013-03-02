@@ -21,13 +21,18 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ----------------------------------------------------------------------------------
 
+loadfile(GetUserDataPath() .. "/Scripts/Menu.lua")();
+
 -----------CONFIG-----------
+--Runtime config
+local settings = {};
+settings.MFMines = 100;
+settings.MFSpeed = 100; --*1000
+--Hard config
 --end turn after replaced teleport
 local endturn = false
 
-local mineFountainMines = 100
 local mineFountainDelta = 70
-local mineFountainMaxV = 100000
 --------END OF CONFIG-------
 
 --not gear types
@@ -57,12 +62,6 @@ function direction(x,y,nr)
 	local ny = y*nr/r
 
 	return nx, ny
-end
-
-local selidx = 1
-function chSelector(dir)
-	selidx = 1 + (selidx + dir - 1) % #items
-	AddCaption(itemnames[selidx])
 end
 
 --integer division (assuming positive arguments)
@@ -97,8 +96,8 @@ function mineFountainThink()
 
 	local tx,ty = unpack(mineFountainPos)
 	local vx,vy
-	if mineFountainMaxV > 0 then
-		vx,vy = upQuadVector(mineFountainMaxV)
+	if settings.MFSpeed > 0 then
+		vx,vy = upQuadVector(settings.MFSpeed*1000)
 	else
 		vx = 0
 		vy = 0
@@ -119,7 +118,7 @@ function mineFountainPlace(x, y)
 	else
 		--AddCaption("placing mine fountain: ".. x..","..y)
 		mineFountainPos = { x, y }
-		mineFountainCnt = mineFountainMines
+		mineFountainCnt = settings.MFMines
 		mineFountainTime = mineFountainDelta + 1
 	end
 end
@@ -130,10 +129,10 @@ function teleportThink()
 	--AddCaption(GetState(teleport) .. ", " .. GetGearMessage(teleport))
 	local tx,ty = GetGearTarget(teleport)
 
-	if items[selidx] == nogtMineFountain then
+	if items[settings.item] == nogtMineFountain then
 		mineFountainPlace(tx, ty)
 	else
-		local newgear = AddGear(tx, ty, items[selidx], 0, 0, 0, 0)
+		local newgear = AddGear(tx, ty, items[settings.item], 0, 0, 0, 0)
 	end
 
 	DeleteGear(teleport)
@@ -201,14 +200,57 @@ function onPreciseUp()
 	precise = false
 end
 
+----
+--UI
+----
+
+local itemValues = {}
+for i=1, #items do
+	table.insert(itemValues, {itemnames[i],items[i]})
+end
+
+local inMenu = false
+local menu = Menu:new("Main menu", {
+	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
+	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 50),
+	ItemSelector:new("Mine fountain velocity", settings, 'MFSpeed', {-100, 0, 100,200,500,1000}, 100),
+	ItemCB:new("Exit menu", function() inMenu=false end)
+	})
+menuEnter(menu);
+
 function onUp()
-	if GetCurAmmoType() == amTeleport then
-		chSelector(1)
+	--HogSay(CurrentHedgehog, 'up', SAY_SAY)
+	if GetCurAmmoType() ~= amTeleport then return end
+	if inMenu then menuUp()
+	else inMenu = true end
+	mRefresh()
+end
+function onDown()
+	if GetCurAmmoType() ~= amTeleport then return end
+	if inMenu then menuDown()
+	else inMenu = true end
+	mRefresh()
+end
+function onLeft()
+	if GetCurAmmoType() ~= amTeleport then return end
+	if inMenu then
+		menuLeft()
+		mRefresh()
+	end
+end
+function onRight()
+	if GetCurAmmoType() ~= amTeleport then return end
+	if inMenu then
+		menuRight()
+		mRefresh()
 	end
 end
 
-function onDown()
-	if GetCurAmmoType() == amTeleport then
-		chSelector(-1)
-	end
+function mRefresh()
+	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
+end
+
+function mHide()
+	inMenu = false
+	HideMission()
 end
