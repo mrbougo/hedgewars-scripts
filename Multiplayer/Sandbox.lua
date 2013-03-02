@@ -129,10 +129,10 @@ function teleportThink()
 	--AddCaption(GetState(teleport) .. ", " .. GetGearMessage(teleport))
 	local tx,ty = GetGearTarget(teleport)
 
-	if items[settings.item] == nogtMineFountain then
+	if settings.item == nogtMineFountain then
 		mineFountainPlace(tx, ty)
 	else
-		local newgear = AddGear(tx, ty, items[settings.item], 0, 0, 0, 0)
+		local newgear = AddGear(tx, ty, settings.item, 0, 0, 0, 0)
 	end
 
 	DeleteGear(teleport)
@@ -214,7 +214,7 @@ local menu = Menu:new("Main menu", {
 	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
 	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 3),
 	ItemSelector:new("Mine fountain velocity", settings, 'MFSpeed', {-100, 0, 100,200,500,1000}, 3),
-	ItemCB:new("Exit menu", function() inMenu=false end)
+	ItemCB:new("Exit menu", mHide)
 	})
 menuEnter(menu);
 
