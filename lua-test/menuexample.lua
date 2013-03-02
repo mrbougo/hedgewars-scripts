@@ -5,9 +5,11 @@ local data = {};
 
 local mainmenu = Menu:new("Main menu", {
 	ItemBool:new("testy bool", settings, 'testbool'),
-	ItemBool:new("testy bool2", settings, 'testbool2'),
-	ItemSelector:new("field to print", data, 'field', {'testbool','testbool2'}),
-	ItemCB:new("print field", function(d) print(settings[d.field]) end, data)
+	ItemInt:new("testy int", settings, 'testint', -3, 5),
+	ItemInt:new("testy int2", settings, 'testint2', -3, 5),
+	ItemSelector:new("field to print", data, 'field', {'testbool','testint','testint2'}),
+	ItemCB:new("print field", function(d) print(tostring(settings[d.field])) end, data),
+	ItemCB:new("print 'test'", function() print('test') end)
 	});
 
 menuEnter(mainmenu);
