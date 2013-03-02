@@ -212,8 +212,8 @@ end
 local inMenu = false
 local menu = Menu:new("Main menu", {
 	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
-	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 50),
-	ItemSelector:new("Mine fountain velocity", settings, 'MFSpeed', {-100, 0, 100,200,500,1000}, 100),
+	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 3),
+	ItemSelector:new("Mine fountain velocity", settings, 'MFSpeed', {-100, 0, 100,200,500,1000}, 3),
 	ItemCB:new("Exit menu", function() inMenu=false end)
 	})
 menuEnter(menu);
