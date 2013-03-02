@@ -75,6 +75,9 @@ do
 	end
 end
 
+----------------------------------------------
+--Menu class: instances hold items in an array
+----------------------------------------------
 Menu = class(
 	function(o,title,items)
 		o.title = title;
@@ -129,11 +132,10 @@ function Menu:left()
 end
 
 
----------------------------------
---Item object and derived classes
----------------------------------
-
---parent item class
+--------------------------
+--Item and derived classes
+--------------------------
+--Parent item class: text only, not interactive.
 Item = class(
 	function(o,text)
 		o.text = text;
@@ -142,7 +144,8 @@ function Item:left() return false end
 function Item:light() return false end
 function Item:display() return "" end
 
---Menu item: enters a submenu by making self.menu the top of the stack
+--Menu item: enters a submenu by making self.menu the top of the stack.
+--Untested.
 ItemMenu = class(
 	function(o,text,menu)
 		Item.init(o, text or menu.title);
@@ -155,7 +158,8 @@ function ItemMenu:display()
 	return '>>>';
 end
 
-
+--Setting item: sets a value in a given table, parent class of more useful
+--setting items.
 ItemSetting = class(Item,
 	function(o, text, table, key)
 		Item.init(o, text);
@@ -172,7 +176,9 @@ function ItemSetting:display()
 	return '< ' .. self:string() .. ' >';
 end
 
-
+--Selector setting item: select a value from a given list.
+--If a value in the list is a table, it is displayed as its first element (a
+--string) while the actual value is held in its second element.
 ItemSelector = class(ItemSetting,
 	function(o, text, table, key, values, start)
 		ItemSetting.init(o,text,table,key);
@@ -205,13 +211,13 @@ function ItemSelector:string()
 	return self.valuestr;
 end
 
-
+--Boolean setting item: an true/false selector.
 ItemBool = class(ItemSelector,
 	function(o, text, table, key, start)
 		ItemSelector.init(o,text,table,key, {{"True",true},{"False",false}}, (start and 1 or 2))
 	end);
 
-
+--Integer setting item: selects an integer in a given, inclusive range.
 ItemInt = class(ItemSetting,
 	function(o, text, table, key, min, max, start)
 		ItemSetting.init(o,text,table,key);
@@ -229,7 +235,7 @@ function ItemInt:right()
 	self:set();
 end
 
-
+--Callback item: calls a function with some data as argument.
 ItemCB = class(Item,
 	function(o, text, cb, data)
 		Item.init(o, text);
@@ -244,7 +250,9 @@ function ItemCB:display()
 end
 
 
---functional interface to the object system
+-------------------------------------------
+--Functional interface to the object system
+-------------------------------------------
 function menuPrint() menuCur:print() end
 function menuTitle() return menuCur.title end
 function menuContents(...) return menuCur:contents(...) end
