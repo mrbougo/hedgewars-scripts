@@ -203,6 +203,7 @@ end
 ----
 --UI
 ----
+local inMenu = false
 
 local itemValues = {}
 for i=1, #items do
@@ -210,6 +211,7 @@ for i=1, #items do
 end
 
 function mRefresh()
+	if not inMenu then return end
 	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
 end
 
@@ -218,7 +220,6 @@ function mHide()
 	HideMission()
 end
 
-local inMenu = false
 local menu = Menu:new("Main menu", {
 	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
 	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 3),
