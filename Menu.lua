@@ -95,17 +95,23 @@ end
 
 function Menu:contents(lbr)
 	local i,item
-	local out, marker
+	local out, marker, line
+	local delim
 	lbr = lbr or "\n"
 
 	out = ""
+	delim = ""
 	for i,item in ipairs(self.items) do
-		marker = (i == self.pos) and ">" or " "
-		out = out .. lbr .. marker
-		if(type(item) == 'string') then
-			out = out .. item
+		if type(item) == 'string' then
+			line = item
 		else
-			out = out .. item.text .. '       ' .. item:display()
+			line = item:_line()
+		end
+
+		if line then
+			marker = (i == self.pos) and ">" or " "
+			out = out .. delim .. marker .. line
+			delim = lbr
 		end
 	end
 
@@ -136,13 +142,53 @@ end
 --Item and derived classes
 --------------------------
 --Parent item class: text only, not interactive.
+EVENT_LEFT  = 1
+EVENT_RIGHT = 2
+
 Item = class(
 	function(o,text)
 		o.text = text
+		o.enabled = true
+		o.hidden = false
 	end)
-function Item:left() return false end
-function Item:light() return false end
+function Item:enable() self.enabled=true end
+function Item:disable() self.enabled=false end
+function Item:hide() self.hidden=true end
+function Item:unhide() self.hidden=false end
+function Item:_event(ev)
+	if self.cb then self.cb(self,ev,self.cbdata) end
+end
+function Item:left()  self:_event(EVENT_LEFT) end
+function Item:right() self:_event(EVENT_RIGHT) end
+function Item:connect(cb, data)
+	assert(not self.cb)  --error if already connected
+	print('connected'..tostring(cb))
+	self.cb = cb
+	self.cbdata = data
+end
+function Item:disconnect()
+	self.cb = nil
+	self.cbdata = nil
+end
 function Item:display() return "" end
+function Item:_line()
+	local out
+	local rightout
+	if self.hidden then return nil end
+
+	if not self.enabled then
+		out = '('..self.text..')'
+	else
+		out = self.text
+	end
+
+	rightout = self:display()
+	if rightout then
+		return out .. '       ' .. rightout
+	else
+		return out
+	end
+end
 
 --Menu item: enters a submenu by making self.menu the top of the stack.
 --Untested.
@@ -153,9 +199,14 @@ ItemMenu = class(
 	end)
 function ItemMenu:right()
 	menuEnter(self.menu)
+	Item.right(self)
 end
 function ItemMenu:display()
-	return '>>>'
+	if self.enabled then
+		return '>>>'
+	else
+		return '>XX'
+	end
 end
 
 --Setting item: sets a value in a given table, parent class of more useful
@@ -173,7 +224,11 @@ function ItemSetting:string()
 	return self.value
 end
 function ItemSetting:display()
-	return '< ' .. self:string() .. ' >'
+	if self.enabled then
+		return '< ' .. self:string() .. ' >'
+	else
+		return 'x ' .. self:string() .. ' x'
+	end
 end
 
 --Selector setting item: select a value from a given list.
@@ -188,12 +243,18 @@ ItemSelector = class(ItemSetting,
 		o:updateValue()
 	end)
 function ItemSelector:left()   --see Menu:down/up
-	self.pos = 1+(self.pos-2)%#self.values
-	self:updateValue()
+	if self.enabled then
+		self.pos = 1+(self.pos-2)%#self.values
+		self:updateValue()
+	end
+	Item.left(self)
 end
 function ItemSelector:right()  --see Menu:down/up
-	self.pos = 1+self.pos%#self.values
-	self:updateValue()
+	if self.enabled then
+		self.pos = 1+self.pos%#self.values
+		self:updateValue()
+	end
+	Item.right(self)
 end
 function ItemSelector:updateValue()
 	local val = self.values[self.pos]
@@ -227,26 +288,33 @@ ItemInt = class(ItemSetting,
 		o:set()
 	end)
 function ItemInt:left()
-	self.value = self.min + (self.value - self.min - 1)%(self.max - self.min + 1)
-	self:set()
+	if self.enabled then
+		self.value = self.min + (self.value - self.min - 1)%(self.max - self.min + 1)
+		self:set()
+	end
+	Item.left(self)
 end
 function ItemInt:right()
-	self.value = self.min + (self.value - self.min + 1)%(self.max - self.min + 1)
-	self:set()
+	if self.enabled then
+		self.value = self.min + (self.value - self.min + 1)%(self.max - self.min + 1)
+		self:set()
+	end
+	Item.right(self)
 end
 
 --Callback item: calls a function with some data as argument.
 ItemCB = class(Item,
 	function(o, text, cb, data)
 		Item.init(o, text)
-		o.cb = cb
-		o.data = data
+		--drop self and event information
+		o:connect(function(s,ev,data) if ev==EVENT_RIGHT and s.enabled then cb(data) end end, data)
 	end)
-function ItemCB:right()
-	self.cb(self.data)
-end
 function ItemCB:display()
-	return "**"
+	if self.enabled then
+		return "**"
+	else
+		return "--"
+	end
 end
 
 
