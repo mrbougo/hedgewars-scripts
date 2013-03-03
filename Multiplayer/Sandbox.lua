@@ -26,23 +26,91 @@ loadfile(GetUserDataPath() .. "/Scripts/Menu.lua")();
 -----------CONFIG-----------
 --Runtime config
 local settings = {};
-settings.MFMines = 100;
-settings.MFSpeed = 100; --*1000
+
 --Hard config
 --end turn after replaced teleport
 local endturn = false
 
-local mineFountainDelta = 70
+local fountainDelta = 70
 --------END OF CONFIG-------
 
---not gear types
-local nogtMineFountain = -1
+--Constants
+--Fountain items and names
+local itemValues = {
+{"gtGrenade"        , gtGrenade},
+{"gtHedgehog"       , gtHedgehog},  --causes crashes
+{"gtShell"          , gtShell},
+{"gtGrave"          , gtGrave},
+{"gtBee"            , gtBee},  --bee disappears when entering seeking mode, falls into water somewhere
+{"gtShotgunShot"    , gtShotgunShot},  --no trajectory
+{"gtPickHammer"     , gtPickHammer},  --funny glitch
+{"gtRope"           , gtRope},  --no rope
+{"gtMine"           , gtMine},
+{"gtCase"           , gtCase},  --case portal, but no case
+{"gtDEagleShot"     , gtDEagleShot},  --no trajectory, big damage when spawned on a hog
+{"gtDynamite"       , gtDynamite},
+{"gtClusterBomb"    , gtClusterBomb},
+{"gtCluster"        , gtCluster},  --no detonation force?
+{"gtShover"         , gtShover},  --30 damage when spawned on hog, what is this?
+{"gtFlame"          , gtFlame},
+{"gtFirePunch"      , gtFirePunch},
+{"gtATStartGame"    , gtATStartGame},  --does nothing?
+{"gtATFinishGame"   , gtATFinishGame},  --does nothing?
+{"gtParachute"      , gtParachute},  --no effect?
+{"gtAirAttack"      , gtAirAttack},  --plane doesn't drop a thing, sound ends abruptly
+{"gtAirBomb"        , gtAirBomb},
+{"gtBlowTorch"      , gtBlowTorch},
+{"gtGirder"         , gtGirder},  --can't place
+{"gtTeleport"       , gtTeleport},  --appears to work normally
+{"gtSwitcher"       , gtSwitcher},  --spawns switch sprite, no effect?
+{"gtTarget"         , gtTarget},
+{"gtMortar"         , gtMortar},
+{"gtWhip"           , gtWhip},  --same as desert eagle
+{"gtKamikaze"       , gtKamikaze},
+{"gtCake"           , gtCake},  --multiple cakes have glitchy visuals
+{"gtSeduction"      , gtSeduction},  --excellent in fountain mode
+{"gtWatermelon"     , gtWatermelon},
+{"gtMelonPiece"     , gtMelonPiece},
+{"gtHellishBomb"    , gtHellishBomb},
+{"gtWaterUp"        , gtWaterUp},  --raises water (by how much?)
+{"gtDrill"          , gtDrill},
+{"gtBallGun"        , gtBallGun},
+{"gtBall"           , gtBall},
+{"gtRCPlane"        , gtRCPlane},  --a bit buggy, plane doesn't move and input weirdness
+{"gtSniperRifleShot", gtSniperRifleShot},  --see shotgun
+{"gtJetpack"        , gtJetpack},  --lifts the hog a little
+{"gtMolotov"        , gtMolotov},
+{"gtExplosives"     , gtExplosives},
+{"gtBirdy"          , gtBirdy},  --weird
+{"gtEgg"            , gtEgg},  --sounds nice
+{"gtPortal"         , gtPortal},  --just a portal blob, needs velocity
+{"gtPiano"          , gtPiano},  --can spawn multiple, hedgehog dies
+{"gtGasBomb"        , gtGasBomb},
+{"gtSineGunShot"    , gtSineGunShot},  --crashes immediately
+{"gtFlamethrower"   , gtFlamethrower},
+{"gtSMine"          , gtSMine},
+{"gtPoisonCloud"    , gtPoisonCloud},  --can be given velocity
+{"gtHammer"         , gtHammer},  --66 damage?
+{"gtHammerHit"      , gtHammerHit},  --draws a gray rectangle on terrain??
+{"gtResurrector"    , gtResurrector},  --only the effect
+{"gtNapalmBomb"     , gtNapalmBomb},
+{"gtSnowball"       , gtSnowball},  --spawns as a barrel when shift is pressed because of mod
+{"gtFlake"          , gtFlake},  --background effect, doesn't seem affected by velocity?
+{"gtStructure"      , gtStructure},  --wat.
+{"gtLandGun"        , gtLandGun},
+{"gtTardis"         , gtTardis}  --can freeze the engine if spammed!
+}
+--Fountain-able item lookup table
+local fountainable={}
+do
+	local fitems = {gtGrenade,gtHedgehog,gtShell,gtGrave,gtBee,gtShotgunShot,gtPickHammer,gtRope,gtMine,gtCase,gtDEagleShot,gtDynamite,gtClusterBomb,gtCluster,gtShover,gtFlame,gtFirePunch,gtATStartGame,gtATFinishGame,gtParachute,gtAirAttack,gtAirBomb,gtBlowTorch,gtGirder,gtTeleport,gtSwitcher,gtTarget,gtMortar,gtWhip,gtKamikaze,gtCake,gtSeduction,gtWatermelon,gtMelonPiece,gtHellishBomb,gtWaterUp,gtDrill,gtBallGun,gtBall,gtRCPlane,gtSniperRifleShot,gtJetpack,gtMolotov,gtExplosives,gtBirdy,gtEgg,gtPortal,gtPiano,gtGasBomb,gtSineGunShot,gtFlamethrower,gtSMine,gtPoisonCloud,gtHammer,gtHammerHit,gtResurrector,gtNapalmBomb,gtSnowball,gtFlake,gtStructure,gtLandGun,gtTardis}
+	for i=1, #fitems do
+		fountainable[fitems[i]] = true
+	end
+end
 
 local precise = false
 local teleport = nil
-
-local itemnames = { "Barrel", "Mine", "Flame", "Mine Fountain" }
-local items     = { gtExplosives, gtMine, gtFlame, nogtMineFountain }
 
 local switchcnt = 0
 
@@ -84,42 +152,44 @@ function upQuadVector(ampl)
 	return x,y
 end
 
-local mineFountainTime = 0
-local mineFountainCnt = 0
-local mineFountainPos = { 0, 0 }
-function mineFountainThink()
-	if mineFountainCnt <= 0 then return end
+local fountainGear = 0
+local fountainTime = 0
+local fountainCnt = 0
+local fountainPos = { 0, 0 }
+function fountainThink()
+	if fountainCnt <= 0 then return end
 
 	-- count down one frame
-	mineFountainTime = mineFountainTime - 1
-	if mineFountainTime > 0 then return end
+	fountainTime = fountainTime - 1
+	if fountainTime > 0 then return end
 
-	local tx,ty = unpack(mineFountainPos)
+	local tx,ty = unpack(fountainPos)
 	local vx,vy
-	if settings.MFSpeed > 0 then
-		vx,vy = upQuadVector(settings.MFSpeed*1000)
+	if settings.fountainVel > 0 then
+		vx,vy = upQuadVector(settings.fountainVel*1000)
 	else
 		vx = 0
 		vy = 0
 	end
 
-	--AddCaption("spawning mine: ".. tx..","..ty)
-	local mine = AddGear(tx, ty, gtMine, 0, vx, vy, 0)
-	mineFountainCnt = mineFountainCnt - 1
+	--AddCaption("spawning fountain gear: ".. tx..","..ty)
+	local gear = AddGear(tx, ty, fountainGear, 0, vx, vy, 0)
+	fountainCnt = fountainCnt - 1
 
 	--reset frame counter
-	mineFountainTime = mineFountainDelta + 1
+	fountainTime = fountainDelta + 1
 end
 
-function mineFountainPlace(x, y)
-	if mineFountainCnt > 0 then
-		--remove mine fountain
-		mineFountainCnt = 0
+function fountainPlace(gear, x, y)
+	if fountainCnt > 0 then
+		--remove fountain
+		fountainCnt = 0
 	else
-		--AddCaption("placing mine fountain: ".. x..","..y)
-		mineFountainPos = { x, y }
-		mineFountainCnt = settings.MFMines
-		mineFountainTime = mineFountainDelta + 1
+		--AddCaption("placing fountain: ".. x..","..y)
+		fountainGear = gear
+		fountainPos = { x, y }
+		fountainCnt = settings.fountainCnt
+		fountainTime = fountainDelta + 1
 	end
 end
 
@@ -129,8 +199,8 @@ function teleportThink()
 	--AddCaption(GetState(teleport) .. ", " .. GetGearMessage(teleport))
 	local tx,ty = GetGearTarget(teleport)
 
-	if settings.item == nogtMineFountain then
-		mineFountainPlace(tx, ty)
+	if settings.fountain and fountainable[settings.item] then
+		fountainPlace(settings.item, tx, ty)
 	else
 		local newgear = AddGear(tx, ty, settings.item, 0, 0, 0, 0)
 	end
@@ -168,7 +238,7 @@ function onGameTick()
 	teleportThink()
 	switchThink()
 
-	mineFountainThink()
+	fountainThink()
 end
 
 function onGearAdd(gear)
@@ -205,11 +275,6 @@ end
 ----
 local inMenu = false
 
-local itemValues = {}
-for i=1, #items do
-	table.insert(itemValues, {itemnames[i],items[i]})
-end
-
 function mRefresh()
 	if not inMenu then return end
 	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
@@ -220,10 +285,18 @@ function mHide()
 	HideMission()
 end
 
+local miItem = ItemSelector:new("Sandbox item", settings, 'item', itemValues)
+local miFountain = ItemBool:new("Fountain", settings, 'fountain', false)
+local miCnt = ItemSelector:new("Fountain items", settings, 'fountainCnt', {10,20,50,100,200}, 3)
+local miVel = ItemSelector:new("Fountain velocity", settings, 'fountainVel', {-100, 0, 100,200,500,1000}, 3)
+
+miItem:connect(function(self) if fountainable[self.value] then miFountain:enable() else miFountain:disable() end end)
+
 local menu = Menu:new("Main menu", {
-	ItemSelector:new("Sandbox item", settings, 'item', itemValues),
-	ItemSelector:new("Mine fountain mines", settings, 'MFMines', {10,20,50,100,200}, 3),
-	ItemSelector:new("Mine fountain velocity", settings, 'MFSpeed', {-100, 0, 100,200,500,1000}, 3),
+	miItem,
+	miFountain,
+	miCnt,
+	miVel,
 	ItemCB:new("Exit menu", mHide)
 	})
 menuEnter(menu);
