@@ -41,10 +41,10 @@ local airweapons = { amAirAttack, amMineStrike, amNapalm, amDrillStrike, amPiano
 --                         A,M,N,D,P
 local airweapons_values = {2,2,2,2,2}
 
-local utilities = { amTeleport, amGirder, amSwitch, amLowGravity, amResurrector, amRope, amParachute, amJetpack, amPortalGun, amSnowball }
+local utilities = { amTeleport, amGirder, amSwitch, amLowGravity, amResurrector, amRope, amParachute, amJetpack, amPortalGun, amSnowball, amRubber }
 
---                        T,G,S,L,R,R,P,J,P,S
-local utilities_values = {1,2,2,1,2,2,1,2,2,2}
+--                        T,G,S,L,R,R,P,J,P,S,R
+local utilities_values = {1,2,2,1,2,2,1,2,2,2,2}
 
 function randomAmmo()
     local n = 3   --"points" to be allocated on weapons
