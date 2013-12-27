@@ -21,7 +21,7 @@
 -- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ----------------------------------------------------------------------------------
 
-loadfile(GetUserDataPath() .. "/Scripts/Menu.lua")();
+HedgewarsScriptLoad("/Scripts/Menu.lua");
 
 -----------CONFIG-----------
 --Runtime config

@@ -1,6 +1,4 @@
---GetDataPath() has a trailing slash but GetUserDataPath() doesn't?
-loadfile(GetUserDataPath() .. "/Scripts/Menu.lua")();
-
+HedgewarsScriptLoad("/Scripts/Menu.lua");
 
 local settings = {};
 local data = {};
