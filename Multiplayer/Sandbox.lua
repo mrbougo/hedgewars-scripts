@@ -235,6 +235,7 @@ function switchThink()
 end
 
 function onGameTick()
+	menuThink()
 	teleportThink()
 	switchThink()
 
@@ -275,6 +276,12 @@ end
 ----
 local inMenu = false
 
+function menuThink()
+	if GetCurAmmoType() ~= amTeleport and inMenu then
+		mHide()
+	end
+end
+
 function mRefresh()
 	if not inMenu then return end
 	ShowMission('Menu', nil, menuContents('|'), -amBirdy, 0x7FFFFFFF)
@@ -282,6 +289,7 @@ end
 
 function mHide()
 	inMenu = false
+	ShowMission(' ', nil, nil, 1, 1) --FIXME: have a mission text explaining sandbox that we can fall back to
 	HideMission()
 end
 
@@ -329,9 +337,6 @@ function onRight()
 	end
 end
 
-function onSetWeapon()
-	if GetCurAmmoType() ~= amTeleport and inmenu then mHide() end
-end
 function onNewTurn()
 	mHide()
 end
